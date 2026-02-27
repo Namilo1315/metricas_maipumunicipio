@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./estilo.css">
+    <link rel="shortcut icon" href="img/logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <title>Panel de Control</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Fondo de marca de agua */
+        .watermark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.08;
+            font-size: 3rem;
+            font-weight: 500;
+            color:  #004cff;
+            transform: rotate(-20deg);
+            pointer-events: none;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            justify-items: center;
+            align-items: center;
+        }
+
+        .watermark span {
+            white-space: nowrap;
+        }
+
+        .login-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.685);
+            width: 400px;
+            text-align: center;
+            font-size: 18px;
+            position: relative;
+            z-index: 1; /* Para que quede por encima de la marca de agua */
+        }
+
+        h2 {
+            color: #000000b0;
+            margin-bottom: 20px;
+        }
+
+        img {
+            width: 80px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .error {
+            color: red;
+            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .spinner {
+            display: none;
+            margin: 20px auto;
+            border: 8px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 8px solid #3498db;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .bot {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        p {
+            font-size: 15px;
+            margin-top: 10px;
+            color: #000000d0;
+        }
+
+        p:hover {
+            color: blue;
+        }
+        .input-group {
+    position: relative;
+    margin: 15px 0;
+}
+
+.input-icon {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    font-size: 25px;
+    color: #007bff;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 12px 12px 40px;
+    border: 1px solid #ccc;
+    border-radius: 25px;
+    outline: none;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.input-group input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+button.bot {
+    padding: 12px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+button.bot:hover {
+    background-color: #004bbd;
+}
+
+
+    </style>
+</head>
+<body>
+
+<div class="watermark">
+    <span>Dirección de Comunicación</span>
+    <span>Dirección de Comunicación </span>
+    <span>Dirección de Comunicación </span>
+    <span>Dirección de Comunicación </span>
+    <span>Dirección de Comunicación </span>
+    <span>Dirección de Comunicación </span>
+    <span>Dirección de Comunicación </span>
+    <span>Dirección de Comunicación </span>
+    <span>Dirección de Comunicación </span>
+    <span>Dirección de Comunicación </span>
+    <span>Dirección de Comunicación </span>
+    <span>Dirección de Comunicación </span>
+</div>
+
+<div class="login-container" id="loginContainer">
+    <img src="img/logo.png" alt="Logo del sistema">
+    <h2>Iniciar Sesión</h2>
+    <div id="message"></div>
+
+    <div class="input-group">
+        <span class="input-icon"><i class="fas fa-user"></i></span>
+        <input type="text" id="username" placeholder="Usuario" required>
+    </div>
+
+    <div class="input-group">
+        <span class="input-icon"><i class="fas fa-lock"></i></span>
+        <input type="password" id="password" placeholder="Contraseña" required>
+    </div>
+
+    <button class="bot" onclick="login()"> INGRESAR</button>
+</div>
+
+
+<!-- Círculo de carga -->
+<div class="spinner" id="spinner"></div>
+
+<script>
+    const validCredentials = [
+        { username: "metricas", password: "comunicacion2025" }
+       
+    ];
+    
+    function login() {
+        const usernameField = document.getElementById("username");
+        const passwordField = document.getElementById("password");
+        const username = usernameField.value;
+        const password = passwordField.value;
+        const message = document.getElementById("message");
+        const spinner = document.getElementById("spinner");
+        const loginContainer = document.getElementById("loginContainer");
+
+        message.innerText = "";
+        message.className = "";
+
+        if (username === "" || password === "") {
+            message.innerText = "Ambos campos son obligatorios";
+            message.className = "error";
+            return;
+        }
+
+        usernameField.value = "";
+        passwordField.value = "";
+
+        const isValidUser = validCredentials.some(
+            (cred) => cred.username === username && cred.password === password
+        );
+
+        if (isValidUser) {
+            spinner.style.display = "block";
+            loginContainer.style.display = "none";
+
+            setTimeout(() => {
+                window.location.href = "./index.html";
+            }, 1000);
+        } else {
+            message.innerText = "Usuario o contraseña incorrectos";
+            message.className = "error";
+        }
+    }
+</script>
+
+</body>
+</html>

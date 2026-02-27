@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Métricas – Matías Stevanato</title>
+  <link rel="shortcut icon" href="img/logo.png" type="image/x-icon">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --azul:#004b7f; 
+      --azul-2:#006aa3; 
+      --gris-fondo:#f5f7fa; 
+      --card:#ffffff; 
+      --borde:#e0e6ed;
+      --verde:#1a7f37; 
+      --verde-suave:#e1f3e7; 
+      --amarillo:#bf8f00; 
+      --amarillo-suave:#fff8e1;
+      --texto:#111;
+      --zoom:.90;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;background:var(--gris-fondo);color:var(--texto);
+      font:14.5px/1.45 "Inter",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial
+    }
+    .container{max-width:1200px;margin:auto;padding:22px 16px 40px}
+
+    /* Header + nav */
+    header{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      margin-bottom:12px;
+      flex-wrap:wrap
+    }
+    header img{height:48px}
+    header h1{
+      margin:0;
+      color:var(--azul);
+      font-size:26px;
+      font-weight:800;
+      line-height:1.15
+    }
+    .nav{
+      margin-left:auto;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap
+    }
+    .btn{
+      padding:8px 12px;
+      border:1px solid var(--azul-2);
+      background:#fff;
+      color:var(--azul-2);
+      border-radius:10px;
+      text-decoration:none;
+      font-weight:700
+    }
+    .btn:hover{background:var(--azul-2);color:#fff}
+    .btn.active{background:var(--azul-2);color:#fff;pointer-events:none;opacity:.92}
+
+    /* ====== Year bar (selector + comparar) ====== */
+    .yearbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:10px 12px;
+      border-radius:14px;
+      background:#fff;
+      border:1px solid var(--borde);
+      box-shadow:0 1px 3px rgba(0,0,0,.06);
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+    .yearbar-left{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .yearbar-right{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-left:auto;
+    }
+    .year-label{
+      font-size:13px;
+      color:#333;
+      font-weight:700;
+    }
+    .year-select{
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid var(--borde);
+      background:#fff;
+      font-weight:800;
+      color:var(--azul);
+      outline:none;
+    }
+    .compare-toggle{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+      user-select:none;
+      font-weight:800;
+      color:var(--azul-2);
+      background:rgba(0,106,163,0.06);
+      border:1px solid rgba(0,106,163,0.18);
+      padding:7px 10px;
+      border-radius:999px;
+    }
+    .compare-toggle input{
+      transform:scale(1.05);
+      accent-color: var(--azul-2);
+    }
+    .compare-hint{
+      font-size:12px;
+      color:#666;
+      max-width:520px;
+    }
+
+    /* Secciones */
+    section{margin-top:28px}
+    section h2{
+      margin:0 0 14px;color:var(--azul);font-size:20px;font-weight:700;
+      border-bottom:2px solid var(--azul-2);padding-bottom:6px
+    }
+    .section-subtitle{
+      margin:4px 0 14px;
+      font-size:13px;
+      color:#555;
+      max-width:720px;
+    }
+
+    /* Charts */
+    .charts{
+      display:grid;gap:20px;
+      grid-template-columns:repeat(2,minmax(280px,1fr));
+    }
+    .card{
+      background:var(--card);border:1px solid var(--borde);border-radius:12px;
+      padding:14px 14px 10px;box-shadow:0 1px 3px rgba(0,0,0,.06)
+    }
+    .card h3{margin:0 0 10px;text-align:center;color:var(--azul);font-size:16px}
+    .card canvas{width:100%!important;height:340px!important}
+
+    /* Tabla */
+    .table-wrap{
+      background:var(--card);border:1px solid var(--borde);border-radius:12px;
+      padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:auto
+    }
+    table{width:100%;border-collapse:collapse;min-width:720px}
+    thead th{
+      background:var(--azul-2);color:#fff;border:1px solid var(--azul-2);
+      padding:8px 6px;font-weight:700;text-align:center;position:sticky;top:0
+    }
+    tbody td,tbody th{border:1px solid var(--borde);padding:8px 6px}
+    tbody td{text-align:right; vertical-align:top}
+    tbody tr:nth-child(odd){background:#fafcff}
+    tbody tr:hover{background:#f2f6fb}
+    tbody th{
+      text-align:left;background:#f0f4f8;color:var(--azul);font-weight:700;
+      display:flex;align-items:center;gap:8px
+    }
+    .fb-head{background:var(--verde-suave)!important;color:var(--verde)!important}
+    .ig-head{background:var(--amarillo-suave)!important;color:var(--amarillo)!important}
+
+    .icon{width:18px;height:18px;vertical-align:-3px}
+    .ig{color:#E1306C}.fb{color:#1877F2}
+
+    /* Celda con delta en modo comparar */
+    .cell-wrap{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:3px;
+      min-height:30px;
+    }
+    .cell-val{font-weight:800}
+    .cell-delta{
+      font-size:11px;
+      font-weight:800;
+      padding:2px 7px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,0.08);
+      background:rgba(0,0,0,0.03);
+      color:#444;
+      white-space:nowrap;
+    }
+    .delta-up{
+      background:rgba(26,127,55,0.08);
+      border-color:rgba(26,127,55,0.18);
+      color:var(--verde);
+    }
+    .delta-down{
+      background:rgba(200,40,40,0.08);
+      border-color:rgba(200,40,40,0.18);
+      color:#c62828;
+    }
+    .delta-flat{
+      background:rgba(0,106,163,0.07);
+      border-color:rgba(0,106,163,0.16);
+      color:var(--azul-2);
+    }
+    .delta-na{opacity:.7;font-weight:700;}
+
+    /* === Sección eventos destacados === */
+    #eventos-redes{
+      margin-top:32px;
+      padding:18px 14px 22px;
+      border-radius:18px;
+      background:linear-gradient(
+        180deg,
+        rgba(0,75,127,0.08),
+        rgba(0,106,163,0.02)
+      );
+      border:1px solid rgba(0,75,127,0.12);
+    }
+
+    .highlight-subtitle{
+      margin:18px 0 8px;
+      padding:6px 12px;
+      font-size:15px;
+      color:var(--azul);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      border-radius:999px;
+      background:linear-gradient(
+        90deg,
+        rgba(0,75,127,0.16),
+        rgba(0,106,163,0.05)
+      );
+      font-weight:600;
+    }
+    .network-tag{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      padding:3px 9px;
+      border-radius:999px;
+      border:1px solid var(--borde);
+      background:#fff;
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      white-space:nowrap;
+    }
+    .tag-icon{
+      width:14px;
+      height:14px;
+      vertical-align:-2px;
+    }
+    .fb-tag{
+      border-color:rgba(24,119,242,.4);
+      color:#1877F2;
+      background:rgba(24,119,242,.06);
+    }
+    .ig-tag{
+      border-color:rgba(225,48,108,.4);
+      color:#E1306C;
+      background:rgba(225,48,108,.08);
+    }
+
+    .carousel-wrapper{position:relative;margin-top:6px;}
+    .carousel-viewport{
+      border-radius:16px;
+      overflow:hidden;
+      background:var(--card);
+      box-shadow:0 2px 10px rgba(0,0,0,.12);
+      min-height:120px;
+    }
+    .carousel-slide{display:none;}
+    .carousel-slide.active{display:block;}
+    .carousel-slide-inner{display:flex;flex-wrap:wrap;}
+    .carousel-img-box{
+      flex:1 1 55%;
+      position:relative;
+      overflow:hidden;
+      background:#000;
+    }
+    .carousel-img-box img{
+      width:100%;
+      height:auto;
+      display:block;
+      cursor:zoom-in;
+      transition:transform .25s ease, filter .25s ease;
+    }
+    .carousel-slide.active .carousel-img-box img{transform:scale(1.01);}
+    .highlight-month-pill{
+      position:absolute;
+      top:12px;
+      left:12px;
+      background:rgba(0,75,127,.96);
+      color:#fff;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.06em;
+    }
+
+    .carousel-body{
+      flex:1 1 45%;
+      padding:18px 20px 18px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:10px;
+    }
+    .carousel-body.fb-body{
+      background:linear-gradient(135deg, rgba(0,75,127,0.06), rgba(24,119,242,0.03));
+      border-left:3px solid rgba(24,119,242,0.4);
+    }
+    .carousel-body.ig-body{
+      background:linear-gradient(135deg, rgba(225,48,108,0.05), rgba(255,214,224,0.03));
+      border-left:3px solid rgba(225,48,108,0.4);
+    }
+
+    .carousel-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:#555;
+    }
+    .meta-chip{
+      padding:3px 8px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.9);
+      border:1px solid rgba(0,0,0,0.06);
+    }
+
+    .carousel-body h4{margin:0;font-size:15px;color:var(--azul-2);font-weight:700;}
+    .carousel-body p{margin:0;font-size:13.5px;color:#333;line-height:1.5;}
+
+    .carousel-arrow{
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      width:32px;height:32px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.16);
+      background:rgba(255,255,255,0.9);
+      box-shadow:0 2px 6px rgba(0,0,0,0.16);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:18px;
+      cursor:pointer;
+      color:var(--azul-2);
+      backdrop-filter:blur(4px);
+    }
+    .carousel-arrow:hover{background:#fff;}
+    .carousel-arrow.prev{left:10px}
+    .carousel-arrow.next{right:10px}
+
+    .carousel-dots{
+      display:flex;
+      gap:6px;
+      margin-top:8px;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+    .carousel-dot{
+      width:10px;height:10px;
+      border-radius:999px;
+      border:1px solid var(--borde);
+      background:#fff;
+      cursor:pointer;
+      transition:all .18s ease;
+    }
+    .carousel-dot.active{
+      background:var(--azul-2);
+      border-color:var(--azul-2);
+      width:16px;
+    }
+
+    .empty-state{
+      padding:14px;
+      font-weight:800;
+      color:#555;
+      text-align:center;
+      background:linear-gradient(90deg, rgba(0,75,127,0.06), rgba(0,106,163,0.02));
+      border:1px dashed rgba(0,75,127,0.25);
+      border-radius:14px;
+      margin:14px;
+    }
+
+    /* LIGHTBOX */
+    .lightbox{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:999;
+    }
+    .lightbox.active{display:flex;}
+    .lightbox-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.7);}
+    .lightbox-content{
+      position:relative;
+      max-width:90vw;
+      max-height:90vh;
+      margin:0;
+      background:#000;
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,0.7);
+      z-index:1;
+      display:flex;
+      flex-direction:column;
+    }
+    .lightbox-content img{
+      display:block;
+      max-width:90vw;
+      max-height:82vh;
+      width:auto;
+      height:auto;
+      object-fit:contain;
+      margin:0 auto;
+    }
+    .lightbox-caption{padding:8px 12px;font-size:12px;color:#f3f3f3;background:rgba(0,0,0,0.9);}
+    .lightbox-close{
+      position:absolute;
+      top:6px;
+      right:8px;
+      width:28px;height:28px;
+      border-radius:999px;
+      border:none;
+      background:rgba(0,0,0,0.6);
+      color:#fff;
+      font-size:18px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .lightbox-close:hover{background:rgba(0,0,0,0.85);}
+
+    /* BREAKPOINTS */
+    @media (max-width:1024px){
+      header img{height:56px}
+      header h1{font-size:24px}
+      .card canvas{height:320px!important}
+    }
+    @media (max-width:860px){
+      .charts{grid-template-columns:1fr}
+      .nav{margin-left:0}
+      header{align-items:flex-start}
+      .btn{font-size:14px;padding:7px 10px}
+      .yearbar-right{margin-left:0}
+    }
+    @media (max-width:768px){
+      header{
+        flex-direction:column;
+        align-items:center;
+        text-align:center;
+      }
+      header img{height:56px;}
+      header h1{font-size:20px;}
+      .nav{
+        width:100%;
+        margin-left:0;
+        justify-content:center;
+      }
+      .yearbar{justify-content:center;text-align:center;}
+      .yearbar-right{justify-content:center;}
+
+      .carousel-slide-inner{flex-direction:column;}
+      .carousel-img-box{flex-basis:100%;}
+      .carousel-body{padding:14px 14px 16px;}
+      .carousel-arrow{top:45%;}
+    }
+    @media (max-width:640px){
+      .carousel-arrow{
+        top:auto;
+        bottom:10px;
+        transform:none;
+      }
+      .carousel-arrow.prev{left:10px}
+      .carousel-arrow.next{right:10px}
+      #eventos-redes{padding:14px 10px 18px;}
+    }
+    @media (max-width:520px){
+      header h1{font-size:20px}
+      header img{height:50px}
+      .card canvas{height:300px!important}
+    }
+
+    /* Escala global 90% */
+    html { zoom: var(--zoom); }
+    @supports not (zoom: 1) {
+      html, body { overflow-x: hidden; }
+      body {
+        transform: scale(var(--zoom));
+        transform-origin: top left;
+        width: calc(100% / var(--zoom));
+      }
+    }
+    .card canvas { height: 300px !important; }
+  </style>
+</head>
+
+<body>
+  <!-- Íconos -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="icon-fb" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M22 12.06C22 6.503 17.523 2 12 2S2 6.503 2 12.06c0 5.016 3.657 9.173 8.438 9.94v-7.03H7.898v-2.91h2.54V9.845c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.47h-1.26c-1.242 0-1.63.773-1.63 1.565v1.873h2.773l-.444 2.91h-2.33v7.03C18.343 21.233 22 17.076 22 12.06z"/>
+    </symbol>
+    <symbol id="icon-ig" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 2.2c3.2 0 3.584.012 4.85.07 1.17.055 1.95.24 2.4.4.6.22 1.03.48 1.48.93.45.45.71.89.93 1.48.16.45.34 1.23.4 2.4.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.06 1.17-.24 1.95-.4 2.4-.22.59-.48 1.03-.93 1.48-.45.45-.89.71-1.48.93-.45.16-1.23.34-2.4.4-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.06-1.95-.24-2.4-.4-.59-.22-1.03-.48-1.48-.93-.45-.45-.71-.89-.93-1.48-.16-.45-.34-1.23-.4-2.4C2.21 15.58 2.2 15.2 2.2 12s.01-3.58.07-4.85c.06-1.17.24-1.95.4-2.4.22-.59.48-1.03.93-1.48.45-.45.89-.71 1.48-.93.45-.16 1.23-.34 2.4-.4C8.42 2.21 8.8 2.2 12 2.2m0-1.7Z"/>
+      <circle fill="currentColor" cx="12" cy="12" r="3.2"/>
+      <circle fill="currentColor" cx="17.4" cy="6.6" r="1.2"/>
+    </symbol>
+  </svg>
+
+  <div class="container">
+    <header>
+      <img src="img/logo.png" alt="Logo Maipú" />
+      <h1 id="pageTitle">Métricas – Matías Stevanato</h1>
+      <nav class="nav" id="topNav">
+        <a class="btn" href="index.html">Maipú</a>
+        <a class="btn active" href="matias.html">Matías</a>
+        <a class="btn" href="reclamos.html">Reclamos</a>
+        <a class="btn" href="crm.html">CRM</a>
+      </nav>
+    </header>
+
+    <!-- BARRA AÑO + COMPARAR -->
+    <div class="yearbar" role="region" aria-label="Selector de año y modo comparar">
+      <div class="yearbar-left">
+        <span class="year-label">Año:</span>
+        <select id="yearSelect" class="year-select" aria-label="Seleccionar año">
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+        </select>
+        <span class="compare-hint" id="compareHint">Elegí un año para ver las métricas.</span>
+      </div>
+      <div class="yearbar-right">
+        <label class="compare-toggle" title="Comparar el año seleccionado con el otro año">
+          <input type="checkbox" id="compareToggle">
+          <span>Comparar</span>
+        </label>
+      </div>
+    </div>
+
+    <section>
+      <h2>Evolución mensual de Redes Sociales.</h2>
+      <div class="charts">
+        <div class="card"><h3>Facebook</h3><canvas id="fbLine"></canvas></div>
+        <div class="card"><h3>Instagram</h3><canvas id="igLine"></canvas></div>
+      </div>
+    </section>
+
+    <section>
+      <h2 id="tableTitle">Métricas mensuales – Matías Stevanato</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>ENE</th><th>FEB</th><th>MAR</th><th>ABR</th><th>MAY</th><th>JUN</th>
+              <th>JUL</th><th>AGO</th><th>SEP</th><th>OCT</th><th>NOV</th><th>DIC</th>
+            </tr>
+          </thead>
+          <tbody id="metricsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Eventos destacados Matías -->
+    <section id="eventos-redes">
+      <h2 id="eventsTitle">Eventos destacados</h2>
+      <p class="section-subtitle"></p>
+
+      <h3 class="highlight-subtitle">
+        Facebook
+        <span class="network-tag fb-tag">
+          <svg class="tag-icon fb"><use href="#icon-fb"/></svg>
+          Eventos destacados
+        </span>
+      </h3>
+      <div id="carousel-facebook" class="carousel-wrapper">
+        <button class="carousel-arrow prev" type="button" aria-label="Anterior">&#10094;</button>
+        <div class="carousel-viewport"></div>
+        <button class="carousel-arrow next" type="button" aria-label="Siguiente">&#10095;</button>
+      </div>
+      <div id="dots-facebook" class="carousel-dots"></div>
+
+      <h3 class="highlight-subtitle">
+        Instagram
+        <span class="network-tag ig-tag">
+          <svg class="tag-icon ig"><use href="#icon-ig"/></svg>
+          Eventos destacados
+        </span>
+      </h3>
+      <div id="carousel-instagram" class="carousel-wrapper">
+        <button class="carousel-arrow prev" type="button" aria-label="Anterior">&#10094;</button>
+        <div class="carousel-viewport"></div>
+        <button class="carousel-arrow next" type="button" aria-label="Siguiente">&#10095;</button>
+      </div>
+      <div id="dots-instagram" class="carousel-dots"></div>
+    </section>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div id="lightbox" class="lightbox" aria-hidden="true">
+    <div class="lightbox-backdrop"></div>
+    <figure class="lightbox-content">
+      <button type="button" class="lightbox-close" aria-label="Cerrar">&times;</button>
+      <img id="lightbox-img" src="" alt="">
+      <figcaption id="lightbox-caption" class="lightbox-caption"></figcaption>
+    </figure>
+  </div>
+
+  <script>
+    /* Ajustes Chart.js */
+    Chart.defaults.color = '#111';
+    Chart.defaults.font.size = 12;
+    Chart.defaults.plugins.legend.labels.color = '#111';
+    Chart.defaults.plugins.legend.labels.boxWidth = 10;
+    Chart.defaults.plugins.legend.labels.boxHeight = 10;
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.elements.point.pointStyle = 'rect';
+    Chart.defaults.elements.point.radius = 3;
+
+    const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+    const metricOrder = ['Alcances','Visualizaciones','Seguidores','Visitas','Mensajes'];
+    const nf = new Intl.NumberFormat('es-AR');
+
+    const ZEROS_12 = () => Array.from({length:12}, ()=>0);
+
+    /* ===========================
+       DATOS MATÍAS
+       - 2025: tus números
+       - 2026: placeholder en 0 (después lo llenamos)
+    ============================ */
+    const METRICS = {
+      2025: {
+        fb: {
+          Alcances:[28200,25200,29600,23200,10331,95487,186521,179500,28600,10000,38500,17800],
+          Visualizaciones:[105000,82600,78600,51900,26088,385546,1785223,1200000,72900,68800,59100,26200],
+          Seguidores:[191,53,40,30,107,98,71,47,56,77,40,23],
+          Visitas:[4500,3300,2900,2900,2494,1829,1990,1900,2000,2000,1100,1100],
+          Mensajes:[76,40,62,61,33,17,15,0,23,36,16,14]
+        },
+        ig: {
+          Alcances:[24600,28100,20400,32600,27275,118943,230638,247000,33900,43600,76500,80900],
+          Visualizaciones:[113800,112700,82500,132500,143779,225134,857270,680000,253700,180700,256300,293000],
+          Seguidores:[298,269,151,158,191,252,467,345,199,240,182,175],
+          Visitas:[1500,1800,1100,1200,1627,1476,31944,2400,1900,2000,1400,1700],
+          Mensajes:[172,198,148,142,134,144,132,155,185,170,122,137]
+        },
+        eventosFacebook: {
+          enero:{ imagen:'./img/matiasenerof.PNG', descripcion:'🍇 Vendimia Maipucina 2025 - Gran celebración popular.' },
+          febrero:{ imagen:'./img/matiasfebrerof.PNG', descripcion:'🏖️ Festival de Verano en la Plaza Departamental.' },
+          marzo:{ imagen:'./img/matiasmarzof.PNG', descripcion:'🏖️ Festival de Verano en la Plaza Departamental.' },
+          abril:{ imagen:'./img/matiasabrilf.PNG', descripcion:'👏🏻 Maipú fue declarada Capital del Aceto Balsámico por el Honorable Concejo Deliberante.' },
+          mayo:{ imagen:'./img/matiasmayof.png', descripcion:'👏🏻 Día Nacional de la Donación de Órganos.' },
+          junio:{ imagen:'./img/matiasjuniof.png', descripcion:'🚧 Plan Integral de Asfalto 2025-2026. ¡Ya está en marcha! 💪🏻' },
+          julio:{ imagen:'./img/matiasjuliof.PNG', descripcion:'✨ Se pone en funcionamiento el nuevo Centro de Atención Primaria Veterinaria.' },
+          agosto:{ imagen:'./img/matiasagostof.PNG', descripcion:'📍En Maipú tomamos la decisión de profundizar el acompañamiento a nuestros adultos mayores y personas con discapacidad: AHORA TIENEN EXENCIÓN TOTAL DE TASAS MUNICIPALES.' },
+          septiembre:{ imagen:'./img/matiasseptiembref.PNG', descripcion:'🌟 50° Desfile Real Solidario.' },
+          octubre:{ imagen:'./img/matiasoctubref.PNG', descripcion:'Día de la Madre.' },
+          noviembre:{ imagen:'./img/matiasnoviembref.PNG', descripcion:'Día de la Soberanía Nacional.' },
+          diciembre:{ imagen:'./img/matiasdiciembref.PNG', descripcion:'Festival del vacío a las llamas.' }
+        },
+        eventosInstagram: {
+          enero:{ imagen:'./img/matiaseneroi.PNG', descripcion:'📸 Álbum visual del evento Vendimia Maipucina.' },
+          febrero:{ imagen:'./img/matiasfebreroi.PNG', descripcion:'🎶 Post destacando artistas del Festival de Verano.' },
+          marzo:{ imagen:'./img/matiasmarzoi.PNG', descripcion:'🏖️ Festival de Verano en la Plaza Departamental.' },
+          abril:{ imagen:'./img/matiasabrili.PNG', descripcion:'🙏🏻 Con gran devoción, vivimos juntos el Vía Crucis en Maipú.' },
+          mayo:{ imagen:'./img/matiasmayoi.PNG', descripcion:'👏🏻 Maipú celebró el 25 de Mayo.' },
+          junio:{ imagen:'./img/matiasjunioi.PNG', descripcion:'🚧 Plan Integral de Asfalto 2025-2026. ¡Ya está en marcha! 💪🏻' },
+          julio:{ imagen:'./img/matiasjulioi.PNG', descripcion:'❄️ ¡Llegaron las vacaciones de invierno a Maipú! 🗓️' },
+          agosto:{ imagen:'./img/matiasagostoi.PNG', descripcion:'🔹Plan Integral de Asfalto 2025-2026.🔹 📍Jerónimo Ruiz. ➕Más de 450 cuadras de barrios de Maipú.' },
+          septiembre:{ imagen:'./img/matiasseptiembrei.PNG', descripcion:'Con el izamiento de nuestra bandera argentina en la Plaza Departamental 12 de Febrero.' },
+          octubre:{ imagen:'./img/matiasoctubrei.PNG', descripcion:'Fue un placer formar parte del 20° aniversario de la Asociación Mendocina de Pesca 🎣' },
+          noviembre:{ imagen:'./img/matiasnoviembrei.PNG', descripcion:'Vivimos un gran cierre por los 40 años de los kioscos, compartiendo una noche de alegría.' },
+          diciembre:{ imagen:'./img/matiasdiciembrei.PNG', descripcion:'Definimos la lista de concejales que acompañará la próxima etapa de Maipú.' }
+        }
+      },
+
+      2026: {
+        fb: {
+          Alcances: [178600],
+          Visualizaciones: [355600],
+          Seguidores: [196],
+          Visitas: [3000],
+          Mensajes: [38]
+        },
+        ig: {
+          Alcances: [251600],
+          Visualizaciones: [977200],
+          Seguidores: [411],
+          Visitas: [3100],
+          Mensajes: [156]
+        },
+        eventosFacebook: {
+          enero:{ imagen:'./img/2026eneromatiasf.PNG' , descripcion:'🍦 Entregamos con orgullo un reconocimiento a la trayectoria de Chelita Helados, que desde 1955 elabora helados artesanales.' },
+        },
+        eventosInstagram: {
+          enero:{ imagen:'./img/2026eneromatiasi.PNG',descripcion:'🏀 Inauguramos un nuevo playón deportivo en Carril El Resplandor, un espacio pensado como punto de encuentro para las familias de Fray Luis Beltran.' }, 
+        }
+      }
+    };
+
+    const fbColors = {
+      Alcances:'rgba(56,142,60,.9)',
+      Visualizaciones:'rgba(25,118,210,.9)',
+      Seguidores:'rgba(251,192,45,.9)',
+      Visitas:'rgba(239,108,0,.9)',
+      Mensajes:'rgba(142,36,170,.9)'
+    };
+    const igColors = {
+      Alcances:'rgba(255,202,40,.9)',
+      Visualizaciones:'rgba(13,71,161,.9)',
+      Seguidores:'rgba(0,150,136,.9)',
+      Visitas:'rgba(255,143,0,.9)',
+      Mensajes:'rgba(216,27,96,.9)'
+    };
+
+    /* Helpers */
+    const $ = (id)=>document.getElementById(id);
+
+    function fmt(n){
+      if(n === null || n === undefined) return '—';
+      const num = Number(n);
+      if(Number.isNaN(num)) return '—';
+      return nf.format(num);
+    }
+    function safeArr(arr){
+      if(Array.isArray(arr) && arr.length === 12) return arr;
+      const base = Array.isArray(arr) ? arr.slice(0,12) : [];
+      while(base.length < 12) base.push(0);
+      return base;
+    }
+    function oppositeYear(year){
+      return String(year) === '2026' ? '2025' : '2026';
+    }
+    function computeDelta(main, base){
+      const a = Number(main);
+      const b = Number(base);
+      if(Number.isNaN(a) || Number.isNaN(b)) return {text:'—', cls:'delta-na'};
+      const d = a - b;
+      if(b === 0){
+        if(d === 0) return {text:'0', cls:'delta-flat'};
+        return {text:(d>0?'+':'') + fmt(d), cls:d>0?'delta-up':'delta-down'};
+      }
+      const pct = (d / b) * 100;
+      const sign = d>0 ? '+' : '';
+      return {
+        text:`${sign}${fmt(d)} (${sign}${pct.toFixed(1)}%)`,
+        cls: d>0 ? 'delta-up' : (d<0 ? 'delta-down' : 'delta-flat')
+      };
+    }
+
+    /* ===========================
+       CHARTS (1 sola creación + updates)
+    ============================ */
+    let fbChart = null;
+    let igChart = null;
+
+    function buildDatasets(platform, year, dashed=false){
+      const y = METRICS[year];
+      const colors = platform === 'fb' ? fbColors : igColors;
+      const dataObj = y ? y[platform] : null;
+
+      return metricOrder.map(k => ({
+        label: `${k} (${year})`,
+        data: safeArr(dataObj ? dataObj[k] : null),
+        borderColor: colors[k],
+        backgroundColor: colors[k],
+        fill: false,
+        tension: .25,
+        pointRadius: dashed ? 2 : 3,
+        pointStyle: 'rect',
+        borderDash: dashed ? [7,5] : []
+      }));
+    }
+
+    function ensureCharts(){
+      if(!fbChart){
+        fbChart = new Chart(document.getElementById('fbLine'),{
+          type:'line',
+          data:{labels:meses,datasets:[]},
+          options:{
+            responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{position:'top'}},
+            scales:{y:{beginAtZero:true,ticks:{callback:v=>Number(v).toLocaleString('es-AR')}}}
+          }
+        });
+      }
+      if(!igChart){
+        igChart = new Chart(document.getElementById('igLine'),{
+          type:'line',
+          data:{labels:meses,datasets:[]},
+          options:{
+            responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{position:'top'}},
+            scales:{y:{beginAtZero:true,ticks:{callback:v=>Number(v).toLocaleString('es-AR')}}}
+          }
+        });
+      }
+    }
+
+    function updateCharts(mainYear, compareOn){
+      ensureCharts();
+      const other = oppositeYear(mainYear);
+
+      fbChart.data.datasets = compareOn
+        ? [...buildDatasets('fb', mainYear, false), ...buildDatasets('fb', other, true)]
+        : buildDatasets('fb', mainYear, false);
+
+      igChart.data.datasets = compareOn
+        ? [...buildDatasets('ig', mainYear, false), ...buildDatasets('ig', other, true)]
+        : buildDatasets('ig', mainYear, false);
+
+      fbChart.update();
+      igChart.update();
+    }
+
+    /* ===========================
+       TABLA (dinámica)
+    ============================ */
+    function conceptTH(html, extraClass=''){
+      const th = document.createElement('th');
+      if(extraClass) th.className = extraClass;
+      th.innerHTML = html;
+      return th;
+    }
+    function tdCell(mainVal, deltaObj, compareOn){
+      const td = document.createElement('td');
+      if(!compareOn){
+        td.textContent = fmt(mainVal);
+        return td;
+      }
+      const wrap = document.createElement('div');
+      wrap.className = 'cell-wrap';
+
+      const val = document.createElement('div');
+      val.className = 'cell-val';
+      val.textContent = fmt(mainVal);
+
+      const d = document.createElement('div');
+      d.className = `cell-delta ${deltaObj.cls}`;
+      d.textContent = deltaObj.text;
+
+      wrap.appendChild(val);
+      wrap.appendChild(d);
+      td.appendChild(wrap);
+      return td;
+    }
+
+    function buildRow(platform, key, mainYear, compareYear, compareOn, headClass=''){
+      const tr = document.createElement('tr');
+      const isFb = platform === 'fb';
+      const icon = isFb
+        ? `<svg class="icon fb"><use href="#icon-fb"/></svg>`
+        : `<svg class="icon ig"><use href="#icon-ig"/></svg>`;
+      const networkName = isFb ? 'Facebook' : 'Instagram';
+
+      tr.appendChild(conceptTH(`${icon} ${networkName} – ${key}`, headClass));
+
+      const mainArr = safeArr(METRICS[mainYear]?.[platform]?.[key]);
+      const baseArr = safeArr(METRICS[compareYear]?.[platform]?.[key]);
+
+      for(let i=0;i<12;i++){
+        if(!compareOn){
+          tr.appendChild(tdCell(mainArr[i], null, false));
+        }else{
+          tr.appendChild(tdCell(mainArr[i], computeDelta(mainArr[i], baseArr[i]), true));
+        }
+      }
+      return tr;
+    }
+
+    function updateTable(mainYear, compareOn){
+      const tbody = $('metricsBody');
+      tbody.innerHTML = '';
+
+      const compareYear = oppositeYear(mainYear);
+
+      // FB
+      metricOrder.forEach((k, idx)=>{
+        tbody.appendChild(buildRow('fb', k, mainYear, compareYear, compareOn, idx===0?'fb-head':''));
+      });
+      // IG
+      metricOrder.forEach((k, idx)=>{
+        tbody.appendChild(buildRow('ig', k, mainYear, compareYear, compareOn, idx===0?'ig-head':''));
+      });
+    }
+
+    /* ===========================
+       EVENTOS (carouseles por año)
+    ============================ */
+    const mesesLabels = {
+      enero:'ENE', febrero:'FEB', marzo:'MAR', abril:'ABR',
+      mayo:'MAY', junio:'JUN', julio:'JUL', agosto:'AGO',
+      septiembre:'SEP', octubre:'OCT', noviembre:'NOV', diciembre:'DIC'
+    };
+
+    // Lightbox
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxCaption = document.getElementById('lightbox-caption');
+    const lightboxBackdrop = document.querySelector('.lightbox-backdrop');
+    const lightboxClose = document.querySelector('.lightbox-close');
+
+    function openLightbox(src, caption){
+      lightboxImg.src = src;
+      lightboxCaption.textContent = caption || '';
+      lightbox.classList.add('active');
+      lightbox.setAttribute('aria-hidden','false');
+    }
+    function closeLightbox(){
+      lightbox.classList.remove('active');
+      lightboxImg.src = '';
+      lightboxCaption.textContent = '';
+      lightbox.setAttribute('aria-hidden','true');
+    }
+    lightboxBackdrop.addEventListener('click', closeLightbox);
+    lightboxClose.addEventListener('click', closeLightbox);
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeLightbox(); });
+
+    const carouselTimers = {};
+
+    function renderEventos(red, data, wrapperId, dotsId, year, autoDirection){
+      const wrapper = document.getElementById(wrapperId);
+      if(!wrapper) return;
+
+      const viewport = wrapper.querySelector('.carousel-viewport');
+      const dotsContainer = document.getElementById(dotsId);
+      if(!viewport || !dotsContainer) return;
+
+      if(carouselTimers[wrapperId]){
+        clearInterval(carouselTimers[wrapperId]);
+        carouselTimers[wrapperId] = null;
+      }
+
+      viewport.innerHTML = '';
+      dotsContainer.innerHTML = '';
+
+      const ordenMeses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
+        .filter(m => data && data[m]);
+
+      const total = ordenMeses.length;
+
+      if(total === 0){
+        viewport.innerHTML = `<div class="empty-state">Sin eventos cargados aún para ${year}.</div>`;
+        const prevBtn = wrapper.querySelector('.carousel-arrow.prev');
+        const nextBtn = wrapper.querySelector('.carousel-arrow.next');
+        if(prevBtn) prevBtn.style.display = 'none';
+        if(nextBtn) nextBtn.style.display = 'none';
+        dotsContainer.style.display = 'none';
+        return;
+      } else {
+        const prevBtn = wrapper.querySelector('.carousel-arrow.prev');
+        const nextBtn = wrapper.querySelector('.carousel-arrow.next');
+        if(prevBtn) prevBtn.style.display = '';
+        if(nextBtn) nextBtn.style.display = '';
+        dotsContainer.style.display = 'flex';
+      }
+
+      ordenMeses.forEach((mesClave, index) => {
+        const evento = data[mesClave];
+        const etiquetaMes = mesesLabels[mesClave] || mesClave.slice(0,3).toUpperCase();
+        const bodyClass = red === 'Facebook' ? 'carousel-body fb-body' : 'carousel-body ig-body';
+        const titulo = `${red} · ${etiquetaMes}`;
+
+        const slide = document.createElement('article');
+        slide.className = 'carousel-slide';
+        slide.dataset.index = index;
+        slide.innerHTML = `
+          <div class="carousel-slide-inner">
+            <div class="carousel-img-box">
+              <span class="highlight-month-pill">${etiquetaMes}</span>
+              <img src="${evento.imagen}" alt="${evento.descripcion || ''}" data-caption="${(evento.descripcion||'').replace(/"/g,'&quot;')}">
+            </div>
+            <div class="${bodyClass}">
+              <div class="carousel-meta">
+                <span class="meta-chip">${etiquetaMes} ${year}</span>
+                <span class="meta-chip">${red} · Matías Stevanato</span>
+                <span class="meta-chip">Evento ${index + 1}/${total}</span>
+              </div>
+              <h4>${titulo}</h4>
+              <p>${evento.descripcion || ''}</p>
+            </div>
+          </div>
+        `;
+        viewport.appendChild(slide);
+
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'carousel-dot';
+        dot.dataset.index = index;
+        dotsContainer.appendChild(dot);
+      });
+
+      const slides = viewport.querySelectorAll('.carousel-slide');
+      const dots = dotsContainer.querySelectorAll('.carousel-dot');
+      if(slides.length === 0) return;
+
+      let current = 0;
+      const prevBtn = wrapper.querySelector('.carousel-arrow.prev');
+      const nextBtn = wrapper.querySelector('.carousel-arrow.next');
+
+      function goTo(index){
+        slides.forEach((s,i)=> s.classList.toggle('active', i === index));
+        dots.forEach((d,i)=> d.classList.toggle('active', i === index));
+        current = index;
+      }
+
+      if(prevBtn && nextBtn){
+        prevBtn.onclick = () => goTo((current - 1 + slides.length) % slides.length);
+        nextBtn.onclick = () => goTo((current + 1) % slides.length);
+      }
+
+      dots.forEach(dot => {
+        dot.onclick = () => {
+          const idx = parseInt(dot.dataset.index,10);
+          if(!isNaN(idx)) goTo(idx);
+        };
+      });
+
+      goTo(0);
+
+      const dir = autoDirection || 1;
+      if(slides.length > 1){
+        carouselTimers[wrapperId] = setInterval(() => {
+          let nextIndex = current + dir;
+          if(nextIndex < 0) nextIndex = slides.length - 1;
+          if(nextIndex >= slides.length) nextIndex = 0;
+          goTo(nextIndex);
+        }, 8000);
+      } else {
+        if(prevBtn) prevBtn.style.display = 'none';
+        if(nextBtn) nextBtn.style.display = 'none';
+        dotsContainer.style.display = 'none';
+      }
+    }
+
+    document.addEventListener('click', (e)=>{
+      if(e.target && e.target.matches('.carousel-img-box img')){
+        const img = e.target;
+        const caption = img.getAttribute('data-caption') || img.alt || '';
+        openLightbox(img.src, caption);
+      }
+    });
+
+    function updateEvents(year){
+      $('eventsTitle').textContent = `Eventos destacados ${year}`;
+      renderEventos('Facebook', METRICS[year]?.eventosFacebook || {}, 'carousel-facebook', 'dots-facebook', year, 1);
+      renderEventos('Instagram', METRICS[year]?.eventosInstagram || {}, 'carousel-instagram', 'dots-instagram', year, 1);
+    }
+
+    /* ===========================
+       STATE + NAV (mantener year/compare al navegar)
+    ============================ */
+    const LS_YEAR = 'metrics_year';
+    const LS_COMPARE = 'metrics_compare';
+
+    function getState(){
+      const params = new URLSearchParams(location.search);
+      const year = params.get('year') || localStorage.getItem(LS_YEAR) || '2026';
+      const compare = (params.get('compare') || localStorage.getItem(LS_COMPARE) || '0') === '1';
+      return {year, compare};
+    }
+
+    function setState(year, compare){
+      localStorage.setItem(LS_YEAR, year);
+      localStorage.setItem(LS_COMPARE, compare ? '1' : '0');
+
+      const params = new URLSearchParams(location.search);
+      params.set('year', year);
+      params.set('compare', compare ? '1' : '0');
+      history.replaceState({}, '', `${location.pathname}?${params.toString()}`);
+    }
+
+    function syncNavLinks(){
+      const params = new URLSearchParams(location.search);
+      const qs = params.toString();
+      const links = document.querySelectorAll('#topNav a.btn');
+      links.forEach(a=>{
+        const base = (a.getAttribute('href') || '').split('?')[0];
+        if(!base) return;
+        a.setAttribute('href', qs ? `${base}?${qs}` : base);
+      });
+    }
+
+    /* ===========================
+       RENDER
+    ============================ */
+    function render(){
+      const year = $('yearSelect').value;
+      const compareOn = $('compareToggle').checked;
+      const other = oppositeYear(year);
+
+      $('pageTitle').textContent = `Métricas ${year} – Matías Stevanato`;
+      document.title = `Métricas ${year} – Matías Stevanato`;
+
+      $('tableTitle').textContent = compareOn
+        ? `Métricas mensuales – Matías Stevanato (Comparando ${year} vs ${other})`
+        : `Métricas mensuales – Matías Stevanato`;
+
+      $('compareHint').textContent = compareOn
+        ? `Comparación activa: ${year} (principal) vs ${other} (referencia).`
+        : `Viendo año ${year}. Activá “Comparar” para ver diferencias vs ${other}.`;
+
+      updateCharts(year, compareOn);
+      updateTable(year, compareOn);
+      updateEvents(year);
+
+      setState(year, compareOn);
+      syncNavLinks();
+    }
+
+    (function init(){
+      const st = getState();
+      $('yearSelect').value = st.year;
+      $('compareToggle').checked = st.compare;
+
+      $('yearSelect').addEventListener('change', render);
+      $('compareToggle').addEventListener('change', render);
+
+      render();
+    })();
+  </script>
+</body>
+</html>
