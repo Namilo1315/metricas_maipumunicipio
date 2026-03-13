@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceso | Juzgado Vial Zona Este</title>
+  <link rel="icon" href="logo.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    :root{
+      --celeste:#2b9fd8;
+      --celeste-2:#65c1eb;
+      --negro:#111317;
+      --negro-2:#1b2430;
+      --blanco:#ffffff;
+      --gris:#edf4f8;
+      --gris-2:#d9e5ee;
+      --texto:#1e252c;
+      --muted:#64717d;
+      --danger:#d9534f;
+      --success:#198754;
+      --shadow:0 18px 45px rgba(17,19,23,.14);
+      --radius:24px;
+    }
+
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html{
+      height:100%;
+      overflow-x:hidden;
+    }
+
+    body{
+      margin:0;
+      min-height:100svh;
+      font-family:Arial, Helvetica, sans-serif;
+      color:var(--texto);
+      background:linear-gradient(180deg, rgba(246,251,255,.97) 0%, rgba(235,243,248,.99) 100%);
+      overflow-x:hidden;
+      position:relative;
+    }
+
+    .watermark{
+      position:fixed;
+      inset:0;
+      z-index:0;
+      opacity:.05;
+      display:grid;
+      grid-template-columns:repeat(4, 1fr);
+      gap:22px;
+      align-items:center;
+      justify-items:center;
+      transform:rotate(-16deg) scale(1.08);
+      pointer-events:none;
+      font-size:2rem;
+      font-weight:800;
+      color:#0077c8;
+      text-transform:uppercase;
+      user-select:none;
+    }
+
+    .watermark span{
+      white-space:nowrap;
+    }
+
+    .page{
+      position:relative;
+      z-index:1;
+      min-height:100svh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+
+    .login-card{
+      width:100%;
+      max-width:430px;
+      background:var(--blanco);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      border:1px solid rgba(43,159,216,.14);
+      overflow:hidden;
+    }
+
+    .top{
+      background:linear-gradient(135deg, #0f1720 0%, #172331 20%, #207fb0 65%, #38abe0 100%);
+      color:#fff;
+      padding:20px 20px 18px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+
+    .top img{
+      width:78px;
+      height:78px;
+      object-fit:contain;
+      background:#fff;
+      border-radius:18px;
+      padding:8px;
+      box-shadow:0 12px 28px rgba(0,0,0,.20);
+      flex-shrink:0;
+    }
+
+    .top h1{
+      margin:0;
+      font-size:1.3rem;
+      line-height:1.15;
+      text-transform:uppercase;
+    }
+
+    .top p{
+      margin:6px 0 0;
+      color:rgba(255,255,255,.88);
+      font-size:.95rem;
+      line-height:1.35;
+    }
+
+    .content{
+      padding:24px 22px 22px;
+    }
+
+    .title{
+      margin:0 0 6px;
+      text-align:center;
+      font-size:1.35rem;
+      color:var(--negro);
+      font-weight:800;
+    }
+
+    .subtitle{
+      margin:0 0 18px;
+      text-align:center;
+      color:var(--muted);
+      font-size:.98rem;
+      line-height:1.4;
+    }
+
+    .message{
+      min-height:22px;
+      margin-bottom:8px;
+      text-align:center;
+      font-size:.95rem;
+      font-weight:700;
+    }
+
+    .message.error{
+      color:var(--danger);
+    }
+
+    .message.success{
+      color:var(--success);
+    }
+
+    .input-group{
+      position:relative;
+      margin:14px 0;
+    }
+
+    .input-icon{
+      position:absolute;
+      top:50%;
+      left:14px;
+      transform:translateY(-50%);
+      font-size:1rem;
+      color:var(--celeste);
+      z-index:2;
+    }
+
+    .input-group input{
+      width:100%;
+      height:50px;
+      border:1px solid var(--gris-2);
+      border-radius:999px;
+      padding:0 16px 0 44px;
+      outline:none;
+      font-size:16px;
+      font-family:inherit;
+      color:var(--texto);
+      background:#fbfdff;
+      transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+
+    .input-group input:focus{
+      border-color:var(--celeste);
+      box-shadow:0 0 0 4px rgba(43,159,216,.12);
+      background:#fff;
+    }
+
+    .btn{
+      width:100%;
+      height:50px;
+      border:none;
+      border-radius:999px;
+      font-family:inherit;
+      font-size:1rem;
+      font-weight:800;
+      cursor:pointer;
+      color:#fff;
+      background:linear-gradient(135deg, var(--celeste), #0f7caf);
+      box-shadow:0 12px 24px rgba(43,159,216,.24);
+      transition:transform .15s ease, filter .18s ease, opacity .18s ease;
+      margin-top:8px;
+    }
+
+    .btn:hover{
+      filter:brightness(1.03);
+    }
+
+    .btn:active{
+      transform:translateY(1px);
+    }
+
+    .btn:disabled{
+      opacity:.8;
+      cursor:not-allowed;
+    }
+
+    .spinner{
+      display:none;
+      margin:18px auto 0;
+      width:44px;
+      height:44px;
+      border:5px solid #e9f2f8;
+      border-top:5px solid var(--celeste);
+      border-radius:50%;
+      animation:spin 1s linear infinite;
+    }
+
+    .footer-note{
+      margin-top:16px;
+      text-align:center;
+      font-size:.92rem;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    @keyframes spin{
+      from{ transform:rotate(0deg); }
+      to{ transform:rotate(360deg); }
+    }
+
+    @media (max-width:640px){
+      .page{
+        padding:14px;
+      }
+
+      .watermark{
+        grid-template-columns:repeat(2, 1fr);
+        font-size:1.2rem;
+        gap:16px;
+        transform:none;
+        opacity:.045;
+      }
+
+      .login-card{
+        max-width:100%;
+        border-radius:20px;
+      }
+
+      .top{
+        flex-direction:column;
+        text-align:center;
+        padding:18px 16px 16px;
+      }
+
+      .top img{
+        width:72px;
+        height:72px;
+      }
+
+      .top h1{
+        font-size:1.15rem;
+      }
+
+      .top p{
+        font-size:.92rem;
+      }
+
+      .content{
+        padding:18px 16px 18px;
+      }
+
+      .title{
+        font-size:1.2rem;
+      }
+
+      .subtitle{
+        font-size:.94rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="watermark">
+    <span>Dirección de Comunicación</span>
+    <span>Dirección de Comunicación</span>
+    <span>Dirección de Comunicación</span>
+    <span>Dirección de Comunicación</span>
+    <span>Dirección de Comunicación</span>
+    <span>Dirección de Comunicación</span>
+    <span>Dirección de Comunicación</span>
+    <span>Dirección de Comunicación</span>
+  </div>
+
+  <div class="page">
+    <main class="login-card">
+      <div class="top">
+        <img src="logo.png" alt="Logo Maipú Crece" />
+        <div>
+          <h1>Acceso Administrativo</h1>
+          <p>Métricas Dirección de Comunicación</p>
+        </div>
+      </div>
+
+      <div class="content">
+        <h2 class="title">Iniciar sesión</h2>
+        <p class="subtitle">Ingresá con tu usuario y contraseña.</p>
+
+        <div id="message" class="message"></div>
+
+        <div class="input-group">
+          <span class="input-icon"><i class="fas fa-user"></i></span>
+          <input type="text" id="username" placeholder="Usuario" autocomplete="username" />
+        </div>
+
+        <div class="input-group">
+          <span class="input-icon"><i class="fas fa-lock"></i></span>
+          <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password" />
+        </div>
+
+        <button class="btn" id="loginBtn" type="button">Ingresar</button>
+
+        <div class="spinner" id="spinner"></div>
+
+        <div class="footer-note">
+          Municipalidad de Maipú · Acceso interno
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const validCredentials = [
+      { username: "metricas", password: "Comunicacion2026" }
+    ];
+
+    const usernameField = document.getElementById("username");
+    const passwordField = document.getElementById("password");
+    const message = document.getElementById("message");
+    const spinner = document.getElementById("spinner");
+    const loginBtn = document.getElementById("loginBtn");
+
+    function showMessage(text, type = "") {
+      message.textContent = text;
+      message.className = "message";
+      if (type) {
+        message.classList.add(type);
+      }
+    }
+
+    function login() {
+      const username = usernameField.value.trim();
+      const password = passwordField.value.trim();
+
+      showMessage("");
+
+      if (!username || !password) {
+        showMessage("Completá usuario y contraseña.", "error");
+        return;
+      }
+
+      const isValidUser = validCredentials.some(
+        cred => cred.username === username && cred.password === password
+      );
+
+      if (!isValidUser) {
+        showMessage("Usuario o contraseña incorrectos.", "error");
+        return;
+      }
+
+      showMessage("Acceso correcto. Redirigiendo...", "success");
+      spinner.style.display = "block";
+      loginBtn.disabled = true;
+
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 800);
+    }
+
+    loginBtn.addEventListener("click", login);
+
+    usernameField.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") login();
+    });
+
+    passwordField.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") login();
+    });
+  </script>
+</body>
+</html>
